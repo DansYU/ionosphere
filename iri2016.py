@@ -58,11 +58,43 @@ iri_post = {
 }
 
 
-response = requests.post(i_url, data=iri_post)
-
-pattern = re.compile('<pre>(.*?)</pre><HR>',
-                     re.S)
-
+# 获取数据
+response = requests.post(i_url, data=iri_post, headers=url_headers)
+pattern = re.compile('<pre>.*?Selected parameters are:(.*?)</pre><HR>', re.S)
 results = re.findall(pattern, response.text)
-for result in results:
-    print(result)
+
+# 替换文本中的','为空格，方便后面的pandas获取数据
+results0 = re.sub(r',', ' ', results[0])
+
+# 将获取的数据保存到临时文件iri_temp.dat中
+with open('iri_temp.dat', mode='w+', newline='') as f:
+    for result in results0:
+        f.write(result)
+
+# 从临时文件中获取数据
+# 获取pandas的列名，及其相应的单位
+iri_cof = pd.read_csv(
+    'iri_temp.dat',
+    sep='\s+',
+    nrows=61,
+    usecols=[0, 1, 2],
+    names=[
+        'index',
+        'iri_cof',
+        'unit',
+    ],
+    index_col='index')
+
+iri_time_parser = lambda date: dt.datetime.strptime(date, '%Y %j')
+
+d = pd.read_csv(
+    'iri_temp.dat',
+    parse_dates={'date': [0, 3]},
+    date_parser=iri_time_parser,
+    infer_datetime_format=True,
+    keep_date_col=True,
+    index_col='date',
+    header=61,
+    skip_blank_lines=True,
+    sep='\s+',
+    names=list(iri_cof['iri_cof']))
