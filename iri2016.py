@@ -1,6 +1,9 @@
 #%%
 import requests
 import re
+import datetime as dt
+import pandas as pd
+import numpy as np
 
 i_url = 'https://omniweb.gsfc.nasa.gov/cgi/vitmo/vitmo_model.cgi'
 url_headers = {
